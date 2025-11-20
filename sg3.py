@@ -1,18 +1,19 @@
 #! /usr/bin/env python3
 """
 CMP SCI 4500: Intro to Software Profession
-Project SG2
-Project Start Date: 10/23/2025
+Project SG3
+Project Start Date: 11/20/2025
 
 Team Members:
 Alan Zheng
 Jamie Harris
-Olivia Rosenberger
-Paul Corbin
+Elena Miller
+Hannah Smid
+Xavian Kimbrough
+Ryan Berry
 
 IDE's used:
 Neovim
-PyCharm
 Thonny
 VSCode
 
@@ -23,9 +24,7 @@ words across all files. The program displays formatted summaries of file statist
 and search results.
 
 Revision History:
-[10/23/2025]-[Alan]-[Reused SG1 Program]
-[10/25/2025]-[Alan]-[Update Project Details & Team Members]
-[11/03/2025]-[Olivia]-[Wrote initial working functions for concordance and extra lists along with displaying and writing to txt file]
+[10/20/2025]-[Alan]-[Reused SG2 Program & Updated Comments]
 
 External Sources:
 https://docs.python.org/3/library/re.html
