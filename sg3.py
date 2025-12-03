@@ -25,6 +25,8 @@ and search results.
 
 Revision History:
 [10/20/2025]-[Alan]-[Reused SG2 Program & Updated Comments]
+[12/01/2025]-[Elena]-[Added initial GUI framework and interface classes]
+[12/02/2025]-[Hannah]-[Implemented the SG3 code into the SG2 base]
 
 External Sources:
 https://docs.python.org/3/library/re.html
@@ -35,6 +37,8 @@ https://stackoverflow.com/questions/65144347/how-create-summary-table-for-every-
 import os
 import re
 import sys
+import tkinter as tk
+import tkinter import ttk, messagebox
 
 max_input_files = 10
 intro = (
@@ -331,70 +335,249 @@ def write_extra_lists(concordance_array, filenames, wordlists):
             print(line)
             f.write(line + "\n")
 
+# The new sg3 implementations done so far. I adding multiple lines so
+#it is obvious where it was placed.
+#***********************************************************
+#Here is where I put Elenas code. It seem that this code acts as the
+#main and so I deleted the previous sg2 main function. -Hannah
+MAIN_FONT = "Arial"
+MAIN_STYLE = {
+    'font': "Arial", 
+}   
 
-#Main Function
-def main():
-    print(intro)
-
-    #Array initialization for filenames and word lists for each file
-    filenames_array = [] 
-    all_words_array = [] 
-    word_search_array = []
+class OpenFileUI(tk.Frame):
+    def __init__(self,parent,on_submit):
+        tk.Frame.__init__(self,parent)
+        """
+        Initialize Widget
+        """
+        pass
     
-    #file input requiring a minimum of one, and accepting up to 9 more (10 total no duplicates)
-    print("Enter at least one .TXT file")
-    
-    #repeat file process until max is at 10 or user says no
-    addFile = True
-    while addFile == True:
-        filename = prompt_for_filename(filenames_array)
-        file_index = len(filenames_array)
-        filenames_array.append(filename) # add filename to array
-        with open(filename, "r", encoding="utf-8") as f:
-            text = f.read()
-        wordlist =  extract_words(text)
-        all_words_array.append(wordlist)
-        #file total files reach 10, exit loop
-        if file_index < (max_input_files-1):
-            addFile = ask_another_file()
+class CloseFileUI(tk.Frame):
+    program = 4
+    def __init__(self,parent,files,on_submit):
+        """
+        Initialize Widget
+        """
+        tk.Frame.__init__(self,parent,files)
+        self._files = files
+        if len(self._files)>0:
+            pass
         else:
-            addFile = False
-    
-    #print formatted table
-    print_file_table(filenames_array, all_words_array)
-    
-    continueWordCount = True
-    while continueWordCount == True:
-        legal_word = get_legal_word()
-        totals = count_word(filenames_array, all_words_array, legal_word)
-        
-        #print results for this word
-        print(f"\nSearch results for '{legal_word}':")
-        for filename, count in totals:
-            print(f"  {filename}: {count} occurrence(s)")
-        
-        word_search_array.append((legal_word, totals))
-        continueWordCount = ask_continue()
+            messagebox.showerror("Error", "You must have open files to use this option.")
+        pass
+    def getProgramId(self):
+        """ Returns Id of Program"""
+        return self.program
+class WordSearchUI(tk.Frame):
+    """ Ui for word search, """
+    program = 2
+    """  """
+    def __init__(self,parent,files,on_submit,on_cancel,on_error):
+        """
+        Initialize Widget
+        """
+        tk.Frame.__init__(self,parent)
+        if len(self._files)>0:
+            self._search_panel = ttk.LabelFrame(parent,text="Word Search")
+            self._search_panel.pack(anchor="to")
+            self._input = tk.Text(self._search_panel,width="25")
+            self._input.grid(row=0,column=0,columnspan=2,sticky="W")
+            self._result_panel = ttk.LabelFrame(parent,text="Results")
+            
+            self._submit_btn = tk.Button(self._search_panel,text="Enter",command=on_submit)
+            self._submit_btn.grid(row=0,column=2,sticky="E")
+            self._cancel_btn = tk.Button(self._search_panel,text="Cancel",command=on_cancel)
+            self._cancel_btn.grid(row=0,column=3)
+        else:
+            messagebox.showerror("Error", "You must have open files to use this option.")
+            on_error(self.program)
+        #end of file
+    def getProgramId(self):
+        return self.program
 
-    #This is to call for the table that shows specific words 
-    #and their count in files for the end stats
-    queried_words_lc = get_queried_words_from(word_search_array)
-    print_summary_words(queried_words_lc, filenames_array, all_words_array)
+class SelectOpenFile(tk.Frame):
+    """
+        Gui that shows the user a list of opened files to choose from
+    """
+    def __init__(self,parent, open_files=[], on_submit=None):
+        """
+        Initialize Widget
+        """
+        tk.Frame.__init__(self,parent)
+        self._open_files = []
+        if len(self._open_files > 0):
+            pass
+        else:
+            messagebox.showerror("")
+        pass
+class BuildConcordance(tk.Frame):
+    """
+        Gui Frame that 
+    """
+    def __init__(self,parent, open_files=[], on_submit=None):
+        """
+        Initialize Widget
+        """
+        tk.Frame.__init__(self,parent)
+        self._open_files = []
+        if len(self._open_files > 0):
+            
+            pass
+        else:
+            messagebox.showerror("")
+        pass
+
+"""
+https://www.digitalocean.com/community/tutorials/tkinter-working-with-classes
+"""
+class MainMenu(tk.Frame):
+    """ Main Menu for Program """
+    _selected_option = None
+    """
     
-    # SG2 extension
-    # concordance
-    print ("\nBuilding Concordance and Extra Lists...\n")
-    concordance = build_concordance(filenames_array)
-    write_concordance(concordance)
-    write_extra_lists(concordance, filenames_array, all_words_array)
+    """
+    def __init__(self,parent,on_submit):
+        """
+        Initialize Widget
+        on submit
+        """
+        tk.Frame.__init__(self,parent)
+        
+        self._selected_option = tk.IntVar()# selected option
+        
+        self._panel = ttk.LabelFrame(parent,text="Main Menu")
+        self._panel.pack(side="left",anchor='nw',fill="y")
+        # titleLbl = tk.Label(parent,text="Main Menu",font=(MAIN_FONT,20,"bold"))
+        # titleLbl.grid(row=0, column=0)
+        #options
+        
+        option1 = tk.Radiobutton(self._panel,text="1. Select a File",
+                                value=1,
+                                variable=self._selected_option,justify='left',takefocus=True)
+        option1.grid(row=1,column=0,columnspan=2,sticky='W')
+        option2 = tk.Radiobutton(self._panel,text="2. Find a word in all your open files",
+                                value=2, variable=self._selected_option,justify='left',takefocus=False)
+        option2.grid(row=2,column=0,columnspan=2,sticky='W')
+        option3 = tk.Radiobutton(self._panel,text="3. Build a concordance for one open file",
+                                value=3, variable=self._selected_option,justify='left',takefocus=False)
+        option3.grid(row=3,column=0,columnspan=2,sticky='W')
+        option4 =   tk.Radiobutton(self._panel,text="4. Close one of the files",
+                                value=4, variable=self._selected_option,justify='left',takefocus=False)
+        option4.grid(row=4,column=0,columnspan=2,sticky='W')
+        option5 = tk.Radiobutton(self._panel,text="5. Quit Program",
+                                value=5,variable=self._selected_option,justify='left',takefocus=False)
+        option5.grid(row=5,column=0,sticky='W')
+        self.submit = tk.Button(self._panel,text="Enter",command=on_submit)
+        self.submit.grid(row=6,column=1)
+    # def on_selected(self):
+    def getSelectedOption(self):
+        return self._selected_option.get()
+    def clearOptions(self):
+        self._selected_option.set(0)
+    # def enable
+    
+class SG3:
+    '''
+    Runs the program
+    Note: I Created Certain Components as separate classes for the sake of organization.
+    
+    '''
+    TITLE = "SG3 Program"
+    SIZE = "700x600"
+    introduction = ("Usage: This program accepts a '.txt.' file that must reside within the same directory as this program.\n"
+      "After the file is successfully uploaded. The words within the file will be parsed and counted.\n"
+      "Afterwards you will be prompted to enter a word, this will check the occurrences of that word and display a count.\n"
+      "You will then be prompted to continue entering words until you are complete.\n"
+      "Once completed the list of words and their counts will be listed.")
    
-    print("\nConcordance written to CONCORDANCE.TXT!")
-    print("\nExtra lists written to ExtraLists.txt!")
+    def __init__(self):
+        self._files = []
+        self._words_arrays = []
+        self._open_files = []
+        self._program = 0 #for 
+        self.root = tk.Tk()
+        self.root.geometry(self.SIZE)
+        self.root.title = self.TITLE
+        self._main_menu =  MainMenu(self.root,on_submit=self.menu_option_selected)
+        self._main_menu.pack(fill="x",side='right',anchor='nw')
+        self.sub_panel = ttk.LabelFrame(self.root,text="Program",width=450)
+        self.sub_panel.pack(side='right',anchor="ne",fill="both")
+        self.sub_window = None
+        # self.OpenMainMenu()
+        self.root.mainloop()
     
-    print(outro)
-    input("\nPress Enter/Return to exit...")
-    #exit program after displaying summary
-    sys.exit(0)
+    def menu_option_selected(self):
+        print("Menu Option Selected")
+        self._program = self._main_menu.getSelectedOption()
+        match self._program:
+            case 1:
+                self.open_files_ui()
+            case 2:
+                self.word_search_ui()
+            case 3:
+                self.concordance_window()
+            case 4:
+                self.close_file_ui()
+            case 5:
+                self.exit_program()
+            case _:
+                pass
+    def on_error(self,program):
+        if program != 0:
+            self.sub_window.destroy()
+            self._program = 0
+            
+    def open_files_ui(self): # for opening files
+        
+        self.sub_panel.config(text="Open File")
+        
+        # self.sub_window = OpenFileUI(self.sub_panel)
+        print("To Be Implemented")
+        pass
+    def concordance_window(self):
+        self.sub_panel.config(text="Build Concordance")
+        print("To Be Implemented")
+        pass
+    def build_concordance(self):
+        pass
+    
+    def close_file_ui(self):
+        self.sub_panel.config(text="Close a File")
+        print("To Be Implemented")
 
-if __name__ == "__main__":
+        pass
+    def word_search_ui(self):
+        self.sub_panel.config(text="Word Search")
+        print("To Be Implemented")
+        pass
+    
+    def onSubProgramEnded(self,sub):
+        self.sub_panel.config(text="")
+        self.sub_panel
+        pass
+    def exit_program(self):
+        print("To Be Implemented")
+        pass
+    
+    @staticmethod
+    def show_help(x):
+        ''' Displays a help box on screen '''
+        # messagebox.showinfo(title="SG3",message=SG3.introduction)
+    @staticmethod
+    def show(title,msg):
+        return messagebox.showinfo(title=title,message=msg)
+    
+    @staticmethod
+    def ask_continue(title,msg):
+        return messagebox.askyesno(title=title,message=msg)
+    @staticmethod
+    def error(title,msg):
+        return messagebox.showerror(title,msg)
+def main():
+    messagebox.showinfo(title="SG3",message=SG3.introduction)
+    main_program = SG3()
+    sys.exit(0)
+    
+if __name__=="__main__":
     main()
