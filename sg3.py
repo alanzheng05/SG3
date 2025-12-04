@@ -27,6 +27,7 @@ Revision History:
 [10/20/2025]-[Alan]-[Reused SG2 Program & Updated Comments]
 [12/01/2025]-[Elena]-[Added initial GUI framework and interface classes]
 [12/02/2025]-[Hannah]-[Implemented the SG3 code into the SG2 base]
+[12/03/2025]-[Hannah]-[Edited Gui code to support the Main menu functions]
 
 External Sources:
 https://docs.python.org/3/library/re.html
@@ -351,24 +352,83 @@ class OpenFileUI(tk.Frame):
         """
         Initialize Widget
         """
-        pass
-    
+#Addition to get user to input the text manually from the directory
+        self._on_submit = on_submit
+        label = tk.Label(self, text="Enter .TXT filename in this directory:",
+                         font=(MAIN_FONT, 10))
+        label.pack(anchor="w", padx=5, pady=5)
+
+        self._entry = tk.Entry(self, width=40)
+        self._entry.pack(anchor="w", padx=5, pady=5)
+
+        submit_btn = tk.Button(
+            self,
+            text="Open File",
+            command=self._handle_submit
+        )
+        submit_btn.pack(anchor="w", padx=5, pady=5)
+
+        self._msg_label = tk.Label(self, text="", fg="blue",
+                                   font=(MAIN_FONT, 9))
+        self._msg_label.pack(anchor="w", padx=5, pady=5)
+
+    def _handle_submit(self):
+        filename = self._entry.get().strip()
+        if self._on_submit:
+            self._on_submit(self, filename)
+
+    def show_message(self, text, is_error=False):
+        self._msg_label.config(text=text, fg="red" if is_error else "blue")
+
+
+#Edited this class so that the file will close one of the files as per request
+#of the user.   
 class CloseFileUI(tk.Frame):
     program = 4
     def __init__(self,parent,files,on_submit):
         """
         Initialize Widget
         """
-        tk.Frame.__init__(self,parent,files)
+        tk.Frame.__init__(self,parent)
         self._files = files
+        self._on_submit = on_submit
+
         if len(self._files)>0:
-            pass
+            lbl = tk.Label(self, text="Select a file to close:",
+                           font=(MAIN_FONT, 10))
+            lbl.pack(anchor="w", padx=5, pady=5)
+
+            self._listbox = tk.Listbox(self, height=min(10, len(files)))
+            for fname in self._files:
+                self._listbox.insert(tk.END, fname)
+            self._listbox.pack(fill="x", padx=5, pady=5)
+
+            close_btn = tk.Button(
+                self,
+                text="Close Selected File",
+                command=self._handle_close
+            )
+            close_btn.pack(anchor="w", padx=5, pady=5)
         else:
-            messagebox.showerror("Error", "You must have open files to use this option.")
-        pass
+            messagebox.showerror("Error, you must have open files to use this option.")
+
+    def _handle_close(self):
+        if not self._files:
+            return
+        sel = self._listbox.curselection()
+        if not sel:
+            messagebox.showerror("Error", "Please select a file to close.")
+            return
+        index = sel[0]
+        filename = self._files[index]
+        if self._on_submit:
+            self._on_submit(filename)
+
     def getProgramId(self):
         """ Returns Id of Program"""
         return self.program
+
+#Edited to add a textbox for the user to manually input the files
 class WordSearchUI(tk.Frame):
     """ Ui for word search, """
     program = 2
@@ -378,24 +438,63 @@ class WordSearchUI(tk.Frame):
         Initialize Widget
         """
         tk.Frame.__init__(self,parent)
-        if len(self._files)>0:
-            self._search_panel = ttk.LabelFrame(parent,text="Word Search")
-            self._search_panel.pack(anchor="to")
-            self._input = tk.Text(self._search_panel,width="25")
-            self._input.grid(row=0,column=0,columnspan=2,sticky="W")
-            self._result_panel = ttk.LabelFrame(parent,text="Results")
-            
-            self._submit_btn = tk.Button(self._search_panel,text="Enter",command=on_submit)
-            self._submit_btn.grid(row=0,column=2,sticky="E")
-            self._cancel_btn = tk.Button(self._search_panel,text="Cancel",command=on_cancel)
-            self._cancel_btn.grid(row=0,column=3)
+        self._files = files
+        self._on_submit = on_submit
+        self._on_cancel = on_cancel
+        self._on_error = on_error
+
+        if len(self._files) > 0:
+            self._search_panel = ttk.LabelFrame(self, text="Word Search")
+            self._search_panel.pack(anchor="nw", fill="x", padx=5, pady=5)
+
+            tk.Label(self._search_panel, text="Enter a legal word "
+                      "(letters and optional hyphens):").grid(
+                row=0, column=0, columnspan=3, sticky="w", pady=2
+            )
+
+            self._input = tk.Text(self._search_panel, width=25, height=1)
+            self._input.grid(row=1, column=0, columnspan=3, sticky="w")
+
+            self._submit_btn = tk.Button(
+                self._search_panel,
+                text="Search",
+                command=lambda: self._on_submit(self)
+            )
+            self._submit_btn.grid(row=2, column=0, sticky="w", pady=5)
+
+            self._cancel_btn = tk.Button(
+                self._search_panel,
+                text="Cancel",
+                command=self._on_cancel
+            )
+            self._cancel_btn.grid(row=2, column=1, sticky="w", pady=5)
+
+            self._result_panel = ttk.LabelFrame(self, text="Results")
+            self._result_panel.pack(anchor="nw", fill="both",
+                                    expand=True, padx=5, pady=5)
+
+            self._results = tk.Text(self._result_panel, width=60, height=15)
+            self._results.pack(fill="both", expand=True, padx=5, pady=5)
         else:
-            messagebox.showerror("Error", "You must have open files to use this option.")
-            on_error(self.program)
-        #end of file
+            messagebox.showerror("Error, you must have open files to use this option.")
+            if self._on_error:
+                self._on_error(self.program)
+
+    def get_word(self):
+        word = self._input.get("1.0", tk.END).strip()
+        return word
+
+    def show_results(self, text):
+        self._results.delete("1.0", tk.END)
+        self._results.insert(tk.END, text + "\n")
+
     def getProgramId(self):
         return self.program
 
+
+#Edited to let the user see a list of the files and fix the bug of the 
+#open_files being passed into _init_ which would make the list empty
+#And send the appropriate erros for the user
 class SelectOpenFile(tk.Frame):
     """
         Gui that shows the user a list of opened files to choose from
@@ -407,10 +506,43 @@ class SelectOpenFile(tk.Frame):
         tk.Frame.__init__(self,parent)
         self._open_files = []
         if len(self._open_files > 0):
-            pass
+            open_files = []
+        self._open_files = open_files
+        self._on_submit = on_submit
+
+        if len(self._open_files) > 0:
+            lbl = tk.Label(self, text="Select an open file:",
+                           font=(MAIN_FONT, 10))
+            lbl.pack(anchor="w", padx=5, pady=5)
+
+            self._listbox = tk.Listbox(self, height=min(10, len(open_files)))
+            for fname in self._open_files:
+                self._listbox.insert(tk.END, fname)
+            self._listbox.pack(fill="x", padx=5, pady=5)
+
+            submit_btn = tk.Button(
+                self,
+                text="OK",
+                command=self._handle_submit
+            )
+            submit_btn.pack(anchor="w", padx=5, pady=5)
         else:
-            messagebox.showerror("")
-        pass
+            messagebox.showerror("Error", "No open files available.")
+
+    def _handle_submit(self):
+        if not self._open_files or not self._on_submit:
+            return
+        sel = self._listbox.curselection()
+        if not sel:
+            messagebox.showerror("Error", "Please select a file.")
+            return
+        index = sel[0]
+        self._on_submit(self._open_files[index])
+
+
+#Edit this class so that is can align more with the previous sg2 that
+#we are using as the base. I also makes it more convienient for the
+#User to see all the files and to buid the option of build cordanance. 
 class BuildConcordance(tk.Frame):
     """
         Gui Frame that 
@@ -420,13 +552,47 @@ class BuildConcordance(tk.Frame):
         Initialize Widget
         """
         tk.Frame.__init__(self,parent)
-        self._open_files = []
-        if len(self._open_files > 0):
-            
-            pass
+        if open_files is None:
+            open_files = []
+        self._open_files = open_files
+        self._on_submit = on_submit
+        self._selected_index = tk.IntVar(value=0)
+
+        if len(self._open_files) > 0:
+            lbl = tk.Label(self, text="Select a file to build a concordance:",
+                           font=(MAIN_FONT, 10))
+            lbl.pack(anchor="w", padx=5, pady=5)
+
+            for i, fname in enumerate(self._open_files):
+                rb = tk.Radiobutton(
+                    self,
+                    text=fname,
+                    variable=self._selected_index,
+                    value=i,
+                    anchor="w",
+                    justify="left"
+                )
+                rb.pack(anchor="w", padx=10)
+
+            build_btn = tk.Button(
+                self,
+                text="Build Concordance",
+                command=self._handle_submit
+            )
+            build_btn.pack(anchor="w", padx=5, pady=10)
         else:
-            messagebox.showerror("")
-        pass
+            messagebox.showerror("Error, you must have open files to use this option.")
+
+    def _handle_submit(self):
+        if not self._open_files:
+            return
+        idx = self._selected_index.get()
+        if idx < 0 or idx >= len(self._open_files):
+            messagebox.showerror("Error", "Invalid file selection.")
+            return
+        if self._on_submit:
+            self._on_submit(self._open_files[idx])
+#Self note of where the end of what I edited 12/03/2025 - hannah
 
 """
 https://www.digitalocean.com/community/tutorials/tkinter-working-with-classes
