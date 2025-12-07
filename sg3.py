@@ -24,10 +24,11 @@ words across all files. The program displays formatted summaries of file statist
 and search results.
 
 Revision History:
-[10/20/2025]-[Alan]-[Reused SG2 Program & Updated Comments]
+[11/20/2025]-[Alan]-[Reused SG2 Program & Updated Comments]
 [12/01/2025]-[Elena]-[Added initial GUI framework and interface classes]
 [12/02/2025]-[Hannah]-[Implemented the SG3 code into the SG2 base]
 [12/03/2025]-[Hannah]-[Edited Gui code to support the Main menu functions]
+[12/07/2025]-[Hannah]-[Completed the edits to the initial imeplent of GUI to meet the requirements of sg3]
 
 External Sources:
 https://docs.python.org/3/library/re.html
@@ -35,11 +36,13 @@ https://stackoverflow.com/questions/48138015/printing-table-in-format-without-us
 https://www.w3schools.com/python/python_conditions.asp
 https://stackoverflow.com/questions/65144347/how-create-summary-table-for-every-column
 """
-import os
-import re
+
 import sys
 import tkinter as tk
-import tkinter import ttk, messagebox
+from tkinter import messagebox
+from tkinter import ttk
+import os
+import re
 
 max_input_files = 10
 intro = (
@@ -658,24 +661,34 @@ class SG3:
       "Once completed the list of words and their counts will be listed.")
    
     def __init__(self):
+        # Edited to keep track of open files, their word lists, and word searches
         self._files = []
         self._words_arrays = []
         self._open_files = []
-        self._program = 0 #for 
+        self._word_search_array = []
+        self._program = 0
         self.root = tk.Tk()
         self.root.geometry(self.SIZE)
-        self.root.title = self.TITLE
+        self.root.title(self.TITLE)
+
         self._main_menu =  MainMenu(self.root,on_submit=self.menu_option_selected)
         self._main_menu.pack(fill="x",side='right',anchor='nw')
+
         self.sub_panel = ttk.LabelFrame(self.root,text="Program",width=450)
         self.sub_panel.pack(side='right',anchor="ne",fill="both")
         self.sub_window = None
-        # self.OpenMainMenu()
+
         self.root.mainloop()
+
     
     def menu_option_selected(self):
         print("Menu Option Selected")
         self._program = self._main_menu.getSelectedOption()
+        #edited to add this to clear the previous subwindows
+        if self.sub_window is not None:
+            self.sub_window.destroy()
+            self.sub_window = None
+
         match self._program:
             case 1:
                 self.open_files_ui()
@@ -690,42 +703,193 @@ class SG3:
             case _:
                 pass
     def on_error(self,program):
-        if program != 0:
+        #edited this to properly send error fot sub_window is none
+        if program != 0 and self.sub_window is not None:
             self.sub_window.destroy()
-            self._program = 0
-            
-    def open_files_ui(self): # for opening files
-        
-        self.sub_panel.config(text="Open File")
-        
-        # self.sub_window = OpenFileUI(self.sub_panel)
-        print("To Be Implemented")
-        pass
-    def concordance_window(self):
-        self.sub_panel.config(text="Build Concordance")
-        print("To Be Implemented")
-        pass
-    def build_concordance(self):
-        pass
-    
-    def close_file_ui(self):
-        self.sub_panel.config(text="Close a File")
-        print("To Be Implemented")
+        self._program = 0
 
-        pass
+#editing this because some of the functions were moved about and
+#this function is used to implement GUI open file handler        
+    def open_files_ui(self): # for opening files
+        self.sub_panel.config(text="Open File")
+        if len(self._files) >= max_input_files:
+            messagebox.showerror(
+                "Error",
+                f"You already have the maximum of {max_input_files} files open."
+            )
+            return
+        self.sub_window = OpenFileUI(self.sub_panel, on_submit=self._handle_open_file)
+        self.sub_window.pack(fill="both", expand=True, padx=5, pady=5)
+    #to handle the opened files selcted bu the user
+    def _handle_open_file(self, ui: OpenFileUI, filename: str):
+        if not filename:
+            ui.show_message("ERROR: Please enter a filename.", is_error=True)
+            return
+        if not txt_filename(filename):
+            ui.show_message("ERROR: Filename must end in .TXT.", is_error=True)
+            return
+        if not os.path.isfile(filename):
+            ui.show_message("ERROR: File does not exist in this directory.", is_error=True)
+            return
+        if filename in self._files:
+            ui.show_message("ERROR: File has already been opened.", is_error=True)
+            return
+        if len(self._files) >= max_input_files:
+            ui.show_message(f"ERROR: Cannot open more than {max_input_files} files.", is_error=True)
+            return
+
+        # Actually open and parse
+        try:
+            with open(filename, "r", encoding="utf-8") as f:
+                text = f.read()
+        except Exception as e:
+            ui.show_message(f"ERROR reading file: {e}", is_error=True)
+            return
+
+        words = extract_words(text)
+        self._files.append(filename)
+        self._words_arrays.append(words)
+        self._open_files = self._files
+
+        ui.show_message(f"File '{filename}' opened successfully. "
+                        f"Total words: {len(words)}, distinct: {len(set(words))}.")
+
+        print_file_table(self._files, self._words_arrays)
+
+    #this function does the GUI word search
     def word_search_ui(self):
         self.sub_panel.config(text="Word Search")
-        print("To Be Implemented")
-        pass
-    
-    def onSubProgramEnded(self,sub):
-        self.sub_panel.config(text="")
-        self.sub_panel
-        pass
+        if len(self._files) == 0:
+            messagebox.showerror("Error", "You must open at least one file first.")
+            return
+        self.sub_window = WordSearchUI(
+            self.sub_panel,
+            self._files,
+            on_submit=self._do_word_search,
+            on_cancel=self._cancel_subprogram,
+            on_error=self.on_error
+        )
+        self.sub_window.pack(fill="both", expand=True, padx=5, pady=5)
+    #helps the code do the word search based on user gui input
+    def _do_word_search(self, ui: WordSearchUI):
+        word = ui.get_word()
+        if not word:
+            ui.show_results("Error: Please enter a word to search.")
+            return
+
+        if not re.fullmatch(r"[A-Za-z]+(?:-[A-Za-z]+)*", word):
+            invalid_char = first_invalid_ch(word)
+            if invalid_char:
+                ui.show_results(
+                    f"Error: Invalid character '{invalid_char}' found. "
+                    "Word must only contain letters A-Z and optional hyphens."
+                )
+            else:
+                ui.show_results(
+                    "Error: Word must only contain letters A-Z and optional hyphens."
+                )
+            return
+
+        word_lc = word.lower()
+        totals = count_word(self._files, self._words_arrays, word_lc)
+
+        self._word_search_array.append((word_lc, totals))
+
+        # Creating the GUI result text
+        result_lines = [f"Search results for '{word_lc}':"]
+        for filename, count in totals:
+            result_lines.append(f"  {filename}: {count} occurrence(s)")
+        ui.show_results("\n".join(result_lines))
+        print("\n".join(result_lines))
+
+    #create the concordance of the user selected files from the GUi
+    def concordance_window(self):
+        self.sub_panel.config(text="Build Concordance")
+        if len(self._files) == 0:
+            messagebox.showerror("Error", "You must open at least one file first.")
+            return
+        self.sub_window = BuildConcordance(
+            self.sub_panel,
+            open_files=self._files,
+            on_submit=self._handle_build_concordance
+        )
+        self.sub_window.pack(fill="both", expand=True, padx=5, pady=5)
+    #only the selected files only can be used to build the concordance
+    def _handle_build_concordance(self, filename: str):
+        if filename not in self._files:
+            messagebox.showerror("Error", f"File '{filename}' is not currently open.")
+            return
+
+        concordance = build_concordance([filename])
+        write_concordance(concordance)
+
+        index = self._files.index(filename)
+        wordlists = [self._words_arrays[index]]
+        filenames = [filename]
+        write_extra_lists(concordance, filenames, wordlists)
+
+        messagebox.showinfo(
+            "Concordance",
+            "Concordance written to CONCORDANCE.TXT\n"
+            "Extra lists written to ExtraLists.txt\n"
+            f"(Built using file: {filename})"
+        )
+
+        print("\nConcordance and Extra Lists built for:", filename)
+
+    #close the file in the gui option 4
+    def close_file_ui(self):
+        self.sub_panel.config(text="Close a File")
+        if len(self._files) == 0:
+            messagebox.showerror("Error", "You must have open files to use this option.")
+            return
+        self.sub_window = CloseFileUI(
+            self.sub_panel,
+            files=self._files.copy(),
+            on_submit=self._handle_close_file
+        )
+        self.sub_window.pack(fill="both", expand=True, padx=5, pady=5)
+
+    #function to close the file and to remove it from the memory and list
+    def _handle_close_file(self, filename: str):
+        if filename not in self._files:
+            messagebox.showerror("Error", f"File '{filename}' is not currently open.")
+            return
+        idx = self._files.index(filename)
+        self._files.pop(idx)
+        self._words_arrays.pop(idx)
+        self._open_files = self._files
+
+        messagebox.showinfo("Close File", f"Closed file '{filename}'.")
+        print(f"Closed file '{filename}'.")
+
+        if self._files:
+            print_file_table(self._files, self._words_arrays)
+        else:
+            print("No files currently open.")
+
+        if self.sub_window is not None:
+            self.sub_window.destroy()
+            self.sub_window = None
+
+    #option 5 of exiting the program with sumary statement
     def exit_program(self):
-        print("To Be Implemented")
-        pass
+        if self._word_search_array and self._files:
+            queried_words_lc = get_queried_words_from(self._word_search_array)
+            print_summary_words(queried_words_lc, self._files, self._words_arrays)
+
+        print(outro)
+        messagebox.showinfo("Exit", "Program has finished executing.")
+        self.root.destroy()
+        sys.exit(0)
     
+    #to end the program 
+    def _cancel_subprogram(self):
+        if self.sub_window is not None:
+            self.sub_window.destroy()
+            self.sub_window = None
+        self.sub_panel.config(text="Program")
+
     @staticmethod
     def show_help(x):
         ''' Displays a help box on screen '''
