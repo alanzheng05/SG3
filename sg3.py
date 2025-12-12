@@ -10,7 +10,7 @@ Jamie Harris
 Elena Miller
 Hannah Smid
 Xavian Kimbrough
-Ryan Berry
+
 
 IDE's used:
 Neovim
