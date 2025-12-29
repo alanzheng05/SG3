@@ -155,11 +155,11 @@ def print_file_table(filenames, wordlists):
 
     row_format = ' '.join('{:>%d}' % width for width in col_widths)
 
-    #header display
+    #Header display
     print(row_format.format(*columns))
     print("-" * (sum(col_widths)+ 6))
 
-    #rows display
+    #Rows display
     for row in rows:
         print(row_format.format(*row))
 
@@ -204,7 +204,7 @@ def print_summary_words(queried_words, filenames, wordlists):
         for i, c in enumerate(row):
             col_widths[i] = max(len(str(c)), col_widths[i])
 
-    #format string
+    # format string
     row_format = ' '.join('{:>%d}' % width for width in col_widths)
 
     print("\nSummary of all words queried from files:\n")
@@ -343,7 +343,6 @@ class OpenFileUI(tk.Frame):
 
     def show_message(self, text, is_error=False):
         self._msg_label.config(text=text, fg="red" if is_error else "blue")
-
 
 #Edited this class so that the file will close one of the files as per request
 #of the user.   
