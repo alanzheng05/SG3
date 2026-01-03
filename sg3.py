@@ -21,9 +21,9 @@ def extract_words(text):
     Splits text into words while removing the line-break hyphens
     Returns an array of words.
     """
-    #Remove hyphen and newline
+    # Remove hyphen and newline
     text = re.sub(r"-\n","", text)
-    #Extract words (letters and hyphens)
+    # Extract words (letters and hyphens)
     words_array = re.findall(r"[A-Za-z]+(?:-[A-Za-z]+)*", text)
     return words_array
 
@@ -57,7 +57,7 @@ def get_legal_word():
     while True:
         print("Legal words may only contain letters (A-Z) and optional hyphens (-).\nA word is defined as a series of alphabetic characters, uninterrupted by a blank or a punctuation mark (excluding a hyphen).")
         word = input("Enter a legal word: ").strip()
-        #Regex validates word based on rules
+        # Regex validates word based on rules
         if re.fullmatch(r"[A-Za-z]+(?:-[A-Za-z]+)*", word):
             return word.lower()
         else:
@@ -111,13 +111,13 @@ def count_word(filenames, words_arrays, counted_word):
         totals.append([filename, total])
     return totals
 
-#This checks if the filename ends with .TXT (case-insensitive)
+# This checks if the filename ends with .TXT (case-insensitive)
 def txt_filename(filename):
     name, extension = os.path.splitext(filename)
     return extension.upper() == ".TXT"
 
-#This ask the user for a file and checks to make sure it hasn't been used already
-#This also make sure the file is .TXT and exists in the directory
+# This ask the user for a file and checks to make sure it hasn't been used already
+# This also make sure the file is .TXT and exists in the directory
 def prompt_for_filename(used_names):
     while True:
         filename = input("Please enter a file ending with .TXT: ").strip()
@@ -146,7 +146,7 @@ def print_file_table(filenames, wordlists):
         row = [filename, total_words, len(distinct_words)]
         rows.append(row)
 
-    # width of the colums
+    # Width of the colums
     columns = ["Filename ", "Total Words ", "Distinct Words"]
     col_widths = [len(c) for c in columns]
     for row in rows:
@@ -155,16 +155,16 @@ def print_file_table(filenames, wordlists):
 
     row_format = ' '.join('{:>%d}' % width for width in col_widths)
 
-    #Header display
+    # Header display
     print(row_format.format(*columns))
     print("-" * (sum(col_widths)+ 6))
 
-    #Rows display
+    # Rows display
     for row in rows:
         print(row_format.format(*row))
 
-#This should keep the list of words that were extracted from the word_search_array
-#This is for the end stats
+# This should keep the list of words that were extracted from the word_search_array
+# This is for the end stats
 def get_queried_words_from(word_search_array):
     seen = set()
     out = []
@@ -178,15 +178,15 @@ def get_queried_words_from(word_search_array):
             out.append(w)
     return out
 
-#This is to create a table to present the specific words derived from the files
-#This function also like the files and how many times that word is shown in each 
-#of those files. This is for the end stats
+# This is to create a table to present the specific words derived from the files
+# This function also like the files and how many times that word is shown in each 
+# of those files. This is for the end stats
 def print_summary_words(queried_words, filenames, wordlists):
     if not queried_words:
         print("\nNo words were queried during this program run.")
         return
 
-    # count occurences of each queried word in each of the files
+    # Count occurences of each queried word in each of the files
     counts = []
     for w in queried_words:
         row = []
@@ -195,16 +195,16 @@ def print_summary_words(queried_words, filenames, wordlists):
             row.append(cnt)
         counts.append([w] + row)
 
-    # makes headers for table
+    # Makes headers for table
     columns = ["Word"] + filenames
     col_widths = [len(c) for c in columns]
 
-    # adjust column widths according to data
+    # Adjust column widths according to data
     for row in counts:
         for i, c in enumerate(row):
             col_widths[i] = max(len(str(c)), col_widths[i])
 
-    # format string
+    # Format string
     row_format = ' '.join('{:>%d}' % width for width in col_widths)
 
     print("\nSummary of all words queried from files:\n")
@@ -214,14 +214,14 @@ def print_summary_words(queried_words, filenames, wordlists):
     for row in counts:
         print(row_format.format(*row))
         
-# function to build concordance
+# Function to build concordance
 def build_concordance(filenames):
-    concordance = {} #dictionary for concordance
+    concordance = {} # Dictionary for concordance
     
     for file_num, filename in enumerate(filenames, start = 1):
         with open(filename, 'r', encoding='utf-8') as f:
             for line_num, line in enumerate(f, start = 1):
-                #remove the line-break hyphen and split the text
+                # Remove the line-break hyphen and split the text
                 line = re.sub(r"-\n", "", line)
                 words = re.findall(r"[A-Za-z]+(?:-[A-Za-z]+)*", line)
                 for word_num, word in enumerate(words, start = 1):
@@ -229,11 +229,11 @@ def build_concordance(filenames):
                     location = f"{file_num}.{line_num}.{word_num}"
                     concordance.setdefault(word_lower, []).append(location)
                     
-    #sort the dictionary alphabetically (hyphen comes before 'a')       
+    # Sort the dictionary alphabetically (hyphen comes before 'a')       
     sorted_concordance = dict(sorted(concordance.items(), key = lambda x: x[0].replace("-", " ")))
     return sorted_concordance
 
-#Concordance function to write to txt file and print
+# Concordance function to write to txt file and print
 def write_concordance(concordance):
     with open("CONCORDANCE.TXT", "w", encoding="utf-8") as f:
         for word, locations in concordance.items():
@@ -241,11 +241,11 @@ def write_concordance(concordance):
             print(line)
             f.write(line + "\n")
             
-#Function to build extra lists
+# Function to build extra lists
 def write_extra_lists(concordance_array, filenames, wordlists):
     all_words = list(concordance_array.keys())
     
-    # top ten words
+    # Top ten words
     word_counts = []
     for word in all_words:
         count = sum(w.lower() == word for wl in wordlists for w in wl)
@@ -254,13 +254,13 @@ def write_extra_lists(concordance_array, filenames, wordlists):
     word_counts.sort(key=lambda x: x[1], reverse=True)
     top_ten = word_counts[:10]
 
-    # words appearing at least once in all files
+    # Words appearing at least once in all files
     words_in_all = []
     for word in all_words:
         if all(word in [w.lower() for w in wl] for wl in wordlists):
             words_in_all.append(word)
 
-    # words appearing only in one file
+    # Words appearing only in one file
     words_in_one = []
     for word in all_words:
         file_indices = [i+1 for i, wl in enumerate(wordlists) if word in [w.lower() for w in wl]]
@@ -269,7 +269,7 @@ def write_extra_lists(concordance_array, filenames, wordlists):
 
     # Write to file and print to screen
     with open("ExtraLists.txt", "w", encoding="utf-8") as f:
-        # top ten words
+        # Top ten words
         header1 = "1. TOP TEN WORDS (Word | Total | Files Appeared In)"
         print(header1)
         f.write(header1 + "\n")
@@ -280,7 +280,7 @@ def write_extra_lists(concordance_array, filenames, wordlists):
         print()
         f.write("\n")
 
-        # words appearing at least once in all files
+        # Words appearing at least once in all files
         header2 = "2. WORDS APPEARING AT LEAST ONCE IN ALL FILES:"
         print(header2)
         f.write(header2 + "\n")
@@ -291,7 +291,7 @@ def write_extra_lists(concordance_array, filenames, wordlists):
         print()
         f.write("\n")
 
-        # words appearing only in one file
+        # Words appearing only in one file
         header3 = "3. WORDS APPEARING IN ONLY ONE FILE (Word | File Number):"
         print(header3)
         f.write(header3 + "\n")
@@ -300,11 +300,10 @@ def write_extra_lists(concordance_array, filenames, wordlists):
             print(line)
             f.write(line + "\n")
 
-# The new sg3 implementations done so far. I adding multiple lines so
-#it is obvious where it was placed.
+# The new sg3 implementations done so far. I adding multiple lines so it is obvious where it was placed.
 #***********************************************************
-#Here is where I put Elenas code. It seem that this code acts as the
-#main and so I deleted the previous sg2 main function. -Hannah
+# Here is where I put Elena's code. It seem that this code acts as the
+# main and so I deleted the previous sg2 main function. -Hannah
 MAIN_FONT = "Arial"
 MAIN_STYLE = {
     'font': "Arial", 
@@ -344,8 +343,7 @@ class OpenFileUI(tk.Frame):
     def show_message(self, text, is_error=False):
         self._msg_label.config(text=text, fg="red" if is_error else "blue")
 
-#Edited this class so that the file will close one of the files as per request
-#of the user.   
+# Edited this class so that the file will close one of the files as per request of the user.   
 class CloseFileUI(tk.Frame):
     program = 4
     def __init__(self,parent,files,on_submit):
@@ -391,7 +389,7 @@ class CloseFileUI(tk.Frame):
         """ Returns Id of Program"""
         return self.program
 
-#Edited to add a textbox for the user to manually input the files
+# Edited to add a textbox for the user to manually input the files
 class WordSearchUI(tk.Frame):
     """ Ui for word search, """
     program = 2
@@ -454,10 +452,9 @@ class WordSearchUI(tk.Frame):
     def getProgramId(self):
         return self.program
 
-
-#Edited to let the user see a list of the files and fix the bug of the 
-#open_files being passed into _init_ which would make the list empty
-#And send the appropriate erros for the user
+# Edited to let the user see a list of the files and fix the bug of the 
+# open_files being passed into _init_ which would make the list empty
+# And send the appropriate errors for the user
 class SelectOpenFile(tk.Frame):
     """
         Gui that shows the user a list of opened files to choose from
@@ -502,10 +499,9 @@ class SelectOpenFile(tk.Frame):
         index = sel[0]
         self._on_submit(self._open_files[index])
 
-
-#Edit this class so that is can align more with the previous sg2 that
-#we are using as the base. I also makes it more convienient for the
-#User to see all the files and to buid the option of build cordanance. 
+# Edit this class so that is can align more with the previous sg2 that
+# we are using as the base. I also makes it more convienient for the
+# User to see all the files and to build the option of build cordanance. 
 class BuildConcordance(tk.Frame):
     """
         Gui Frame that 
@@ -555,7 +551,7 @@ class BuildConcordance(tk.Frame):
             return
         if self._on_submit:
             self._on_submit(self._open_files[idx])
-#Self note of where the end of what I edited 12/03/2025 - hannah
+# Self note of where the end of what I edited 12/03/2025 - hannah
 
 """
 https://www.digitalocean.com/community/tutorials/tkinter-working-with-classes
@@ -573,7 +569,7 @@ class MainMenu(tk.Frame):
         """
         tk.Frame.__init__(self,parent)
         
-        self._selected_option = tk.IntVar()# selected option
+        self._selected_option = tk.IntVar() # Selected option
         
         self._panel = ttk.LabelFrame(parent,text="Main Menu")
         self._panel.pack(side="left",anchor='nw',fill="y")
@@ -644,7 +640,7 @@ class SG3:
     def menu_option_selected(self):
         print("Menu Option Selected")
         self._program = self._main_menu.getSelectedOption()
-        #edited to add this to clear the previous subwindows
+        # Edited to add this to clear the previous subwindows
         if self.sub_window is not None:
             self.sub_window.destroy()
             self.sub_window = None
@@ -663,13 +659,13 @@ class SG3:
             case _:
                 pass
     def on_error(self,program):
-        #edited this to properly send error fot sub_window is none
+        # Edited this to properly send error fot sub_window is none
         if program != 0 and self.sub_window is not None:
             self.sub_window.destroy()
         self._program = 0
 
-#editing this because some of the functions were moved about and
-#this function is used to implement GUI open file handler        
+# Editing this because some of the functions were moved about and
+# this function is used to implement GUI open file handler        
     def open_files_ui(self): # for opening files
         self.sub_panel.config(text="Open File")
         if len(self._files) >= max_input_files:
@@ -680,7 +676,7 @@ class SG3:
             return
         self.sub_window = OpenFileUI(self.sub_panel, on_submit=self._handle_open_file)
         self.sub_window.pack(fill="both", expand=True, padx=5, pady=5)
-    #to handle the opened files selcted bu the user
+    # To handle the opened files selected by the user
     def _handle_open_file(self, ui: OpenFileUI, filename: str):
         if not filename:
             ui.show_message("ERROR: Please enter a filename.", is_error=True)
@@ -716,7 +712,7 @@ class SG3:
 
         print_file_table(self._files, self._words_arrays)
 
-    #this function does the GUI word search
+    # This function does the GUI word search
     def word_search_ui(self):
         self.sub_panel.config(text="Word Search")
         if len(self._files) == 0:
@@ -730,7 +726,7 @@ class SG3:
             on_error=self.on_error
         )
         self.sub_window.pack(fill="both", expand=True, padx=5, pady=5)
-    #helps the code do the word search based on user gui input
+    # Helps the code do the word search based on user gui input
     def _do_word_search(self, ui: WordSearchUI):
         word = ui.get_word()
         if not word:
@@ -762,7 +758,7 @@ class SG3:
         ui.show_results("\n".join(result_lines))
         print("\n".join(result_lines))
 
-    #create the concordance of the user selected files from the GUi
+    # Create the concordance of the user selected files from the GUi
     def concordance_window(self):
         self.sub_panel.config(text="Build Concordance")
         if len(self._files) == 0:
@@ -774,7 +770,7 @@ class SG3:
             on_submit=self._handle_build_concordance
         )
         self.sub_window.pack(fill="both", expand=True, padx=5, pady=5)
-    #only the selected files only can be used to build the concordance
+    # Only the selected files only can be used to build the concordance
     def _handle_build_concordance(self, filename: str):
         if filename not in self._files:
             messagebox.showerror("Error", f"File '{filename}' is not currently open.")
@@ -797,7 +793,7 @@ class SG3:
 
         print("\nConcordance and Extra Lists built for:", filename)
 
-    #close the file in the gui option 4
+    # Close the file in the gui option 4
     def close_file_ui(self):
         self.sub_panel.config(text="Close a File")
         if len(self._files) == 0:
@@ -810,7 +806,7 @@ class SG3:
         )
         self.sub_window.pack(fill="both", expand=True, padx=5, pady=5)
 
-    #function to close the file and to remove it from the memory and list
+    # Function to close the file and to remove it from the memory and list
     def _handle_close_file(self, filename: str):
         if filename not in self._files:
             messagebox.showerror("Error", f"File '{filename}' is not currently open.")
@@ -832,7 +828,7 @@ class SG3:
             self.sub_window.destroy()
             self.sub_window = None
 
-    #option 5 of exiting the program with sumary statement
+    # Option 5 of exiting the program with summary statement
     def exit_program(self):
         if self._word_search_array and self._files:
             queried_words_lc = get_queried_words_from(self._word_search_array)
@@ -843,7 +839,7 @@ class SG3:
         self.root.destroy()
         sys.exit(0)
     
-    #to end the program 
+    # To end the program 
     def _cancel_subprogram(self):
         if self.sub_window is not None:
             self.sub_window.destroy()
